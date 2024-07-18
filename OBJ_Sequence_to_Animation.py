@@ -64,4 +64,13 @@ def animate_shape_keys(base_obj, file_list):
 # Animate shape keys
 animate_shape_keys(base_obj, file_list)
 
+# Clean up the scene by deleting all objects except the base_obj
+def cleanup_scene(base_obj):
+    for obj in bpy.context.scene.objects:
+        if obj != base_obj and obj.type != 'CAMERA' and obj.type != 'LIGHT':
+            bpy.data.objects.remove(obj, do_unlink=True)
+
+# Perform cleanup
+cleanup_scene(base_obj)
+
 print("Mesh deforming animation creation complete.")
