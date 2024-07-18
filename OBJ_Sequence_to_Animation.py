@@ -17,40 +17,51 @@ def numerical_sort(value):
 # List all files in the directory, filter .obj files, and sort them
 file_list = sorted([f for f in os.listdir(folder_path) if f.endswith('.obj')], key=numerical_sort)
 
-# Function to import obj files
-def import_obj_files():
-    imported_objects = []
-    for file_name in file_list:
+# Function to import obj file
+def import_obj_file(file_path):
+    bpy.ops.wm.obj_import(filepath=file_path)
+    obj = bpy.context.selected_objects[0]
+    return obj
+
+# Import the first OBJ file and use it as the base mesh
+base_obj = import_obj_file(os.path.join(folder_path, file_list[0]))
+base_obj.name = "BaseMesh"
+bpy.context.view_layer.objects.active = base_obj
+base_obj.shape_key_add(name="Basis", from_mix=False)
+
+# Function to create shape keys from subsequent OBJ files
+def create_shape_keys(base_obj, file_list):
+    for i, file_name in enumerate(file_list[1:]):
         file_path = os.path.join(folder_path, file_name)
-        bpy.ops.wm.obj_import(filepath=file_path)
-        obj_name = os.path.splitext(file_name)[0]
-        obj = bpy.context.selected_objects[0]
-        obj.name = obj_name
-        imported_objects.append(obj)
-        print(f"Imported {file_name}")
-    return imported_objects
-
-# Function to create animation
-def create_animation(imported_objects):
-    for frame, obj in enumerate(imported_objects):
-        bpy.context.scene.frame_set(frame + 1)
+        temp_obj = import_obj_file(file_path)
         
-        for other_obj in imported_objects:
-            other_obj.hide_viewport = True
-            other_obj.hide_render = True
-            other_obj.keyframe_insert(data_path="hide_viewport", frame=frame + 1)
-            other_obj.keyframe_insert(data_path="hide_render", frame=frame + 1)
+        shape_key = base_obj.shape_key_add(name=f"Frame_{i+1}", from_mix=False)
         
-        obj.hide_viewport = False
-        obj.hide_render = False
-        obj.keyframe_insert(data_path="hide_viewport", frame=frame + 1)
-        obj.keyframe_insert(data_path="hide_render", frame=frame + 1)
-        print(f"Frame {frame + 1}: Showing {obj.name}")
+        # Copy vertex positions from the imported object to the shape key
+        for j, vert in enumerate(temp_obj.data.vertices):
+            shape_key.data[j].co = vert.co
+        
+        # Delete the temporary object
+        bpy.data.objects.remove(temp_obj, do_unlink=True)
+        
+        print(f"Created shape key for {file_name}")
 
-# Import the obj files
-imported_objects = import_obj_files()
+# Create shape keys
+create_shape_keys(base_obj, file_list)
 
-# Create the animation
-create_animation(imported_objects)
+# Function to animate shape key influence
+def animate_shape_keys(base_obj, file_list):
+    for frame, file_name in enumerate(file_list[1:], start=1):
+        bpy.context.scene.frame_set(frame)
+        for sk in base_obj.data.shape_keys.key_blocks:
+            sk.value = 0.0
+            sk.keyframe_insert(data_path="value", frame=frame)
+        shape_key = base_obj.data.shape_keys.key_blocks[f"Frame_{frame}"]
+        shape_key.value = 1.0
+        shape_key.keyframe_insert(data_path="value", frame=frame)
+        print(f"Frame {frame}: Shape key {shape_key.name} set to 1.0")
 
-print("Animation creation complete.")
+# Animate shape keys
+animate_shape_keys(base_obj, file_list)
+
+print("Mesh deforming animation creation complete.")
