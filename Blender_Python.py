@@ -56,8 +56,8 @@ print("Successfully imported")
 
 # Add subdivision modifier with 2 levels
 mod_subsurf = obj.modifiers.new(name="Subdivision", type='SUBSURF')
-mod_subsurf.levels = 2
-mod_subsurf.render_levels = 2
+mod_subsurf.levels = 3
+mod_subsurf.render_levels = 3
 
 # Export the scene
 bpy.ops.wm.alembic_export(filepath="/Users/jorgemuyo/Desktop/GH/GH-KS/Exported_Animation.abc")
