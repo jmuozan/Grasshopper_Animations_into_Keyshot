@@ -2,7 +2,11 @@
 
 ----
 
-## Import grasshopper animations to Keyshot as alembic files.
+## Import grasshopper animations to Keyshot as alembic files (.abc)
+
+![](IMGS/Bouncing_Ball_Intro.gif)
+
+![](IMGS/Kangaroo_Animation_Intro.gif)
 
 Still work in progress. Code based on the tutorial [How to export any Mesh or kangaroo animation directly from Grasshopper To Blender using Python](https://youtu.be/Xm__UO0vw8E?si=HCaIqv2emvJkY-vh). 
 
@@ -14,7 +18,7 @@ As I mentioned before, this is a work in progress so the code is not pretty effi
 
 - Grasshopper plug-in for Rhino 3D (If you're checking this documentation probably you already know about it)
 - Blender: An open source 3d software. You can download from [here](https://www.blender.org/). (I'm using version 4.0 on MacOS Sonoma)
-- Keyshot: Rendering engine, I'm using version 11.0
+- Keyshot: Rendering engine, I'm using version 11.3.3 in my tests. There should be no problem with the versions as long as it accepts alembic (.abc) files
 
 ### Understanding Grasshopper Animations
 
