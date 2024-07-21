@@ -48,3 +48,21 @@ This is the way we will make a "slider" that moves automatically. Going back to 
 
 ### How does the code work
 
+#### Grasshopper scripts
+
+These scripts are work of [3D Beast](https://www.youtube.com/@3DBeast) video [How to export any Mesh or kangaroo animation directly from Grasshopper To Blender using Python](https://youtu.be/Xm__UO0vw8E?si=HCaIqv2emvJkY-vh) I really recommend to watch that video before doing it to really understand how do they work and how to set them up. In any case I will overall explain how they work here. 
+
+![](IMGS/3D_Beast_Chanel.png)
+
+![](IMGS/Export_Video_Template.png)
+
+The main idea of the two grasshopper python scripts is to take the main shape or body, convert it into a mesh and export the Faces and Vertices of the meshes saving them into .csv files that will later be used with Blender's API to rebuild the meshes. 
+
+
+
+#### Blender scripts
+
+
+
+
+
