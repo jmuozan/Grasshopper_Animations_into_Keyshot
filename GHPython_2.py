@@ -1,4 +1,3 @@
-#3- Animation script
 if Clear:
 	open(Animation_path, "w")
 if not Clear:

@@ -56,7 +56,96 @@ These scripts are work of [3D Beast](https://www.youtube.com/@3DBeast) video [Ho
 
 ![](IMGS/Export_Video_Template.png)
 
-The main idea of the two grasshopper python scripts is to take the main shape or body, convert it into a mesh and export the Faces and Vertices of the meshes saving them into .csv files that will later be used with Blender's API to rebuild the meshes. 
+The main idea of the first Grasshopper Python script ``` GHPython_1.py``` is to take the main shape or body, convert it into a mesh and export the Faces and Vertices of the meshes saving them into .csv files that will later be used with Blender's API to rebuild the meshes. 
+
+```python
+Vert_data = open(Vert_storage, "w")
+Face_data = open(Face_storage, "w")
+
+
+for v in Mesh.Vertices:
+	Vert_data.write(str(v) + "\n")
+Vert_data.close()
+
+for f in Mesh.Faces:
+	Face_data.write(str(f)[2:-1] + "\n")
+Face_data.close()
+```
+
+Here's a step-by-step explanation:
+
+1. **Open files for writing:**
+
+```python
+Vert_data = open(Vert_storage, "w")
+Face_data = open(Face_storage, "w")
+```
+
+- ```Vert_storage``` and ```Face_storage``` are file paths that will be set inside Grasshopper.
+
+- ```open(Vert_storage, "w")``` opens (or creates if you don't have it) the file specified by Vert_storage in write mode and assigns the file object to Vert_data.
+
+- ```open(Face_storage, "w")``` does the same for Face_storage and assigns the file object to Face_data.
+  
+  
+  
+2. **Write vertices to the file:**
+
+```python
+for v in Mesh.Vertices:
+    Vert_data.write(str(v) + "\n")
+Vert_data.close()
+```
+
+- ```Mesh.Vertices``` is a list of vertex objects.
+- ```for v in Mesh.Vertices:``` will go through each vertex in the list.
+- ```Vert_data.write(str(v) + "\n")``` will convert the vertex v to a string and will write it to the Vert_data file, followed by a newline \n.
+- ```Vert_data.close()``` will close the Vert_data file, ensuring all the data is written.
+
+3. **Write faces to the file:**
+
+```python
+for f in Mesh.Faces:
+    Face_data.write(str(f)[2:-1] + "\n")
+Face_data.close()
+```
+
+- ```Mesh.Faces``` is a list of face objects.
+- ```for f in Mesh.Faces:``` will go through each face in the list.
+- ```Face_data.write(str(f)[2:-1] + "\n")``` will convert the face object f to a string, slicing the string to remove the first two and the last character ([2:-1]), and will write it to the Face_data file, followed by a newline \n.
+- ```Face_data.close()``` will close the Face_data file, ensuring all the data is written.
+
+To set it up inside grasshopper let's use the sphere example from before:
+
+First of all we will have to transform the data from the sphere to a mesh as the script takes the vertex and faces information. This will be possible to achieve by connecting a ```Mesh``` component. 
+
+![](IMGS/Mesh_Component.png)
+
+In order to remove duplicate edges in the mesh we will add a ```Combine&Clean``` component to the ```Mesh``` so the previous script will only save the necessary data.
+
+![](IMGS/Combine&Clean.png)
+
+After that we will add a ```Python 3 script``` component and two panels. 
+
+![](IMGS/Python_3_component.png)
+
+Inside the panels we will write the paths where we want to create the .csv files and inside the python component we will copy the first script and click save. Remember that the path structure will change depending on the OS you're using.
+
+![](IMGS/Paths.png)
+
+![](IMGS/Copying_Script.png)
+
+Now check that if you zoom on top of the Python component you will see different ```+``` and ```-``` signs. We will click on any of the plus signs in the lefts side of the component and will create a new input. 
+
+![](IMGS/Editing_Python_Component.png)
+
+After having the 3 inputs we will rename them by clicking on top of each text and writing the new name in the top part. The three final inputs should be named ```Mesh``` ```Vert_storage``` and ```Face_storage```.
+
+![](IMGS/Renaming_inputs.png)
+
+![](IMGS/New_Inputs.png)
+
+After this we will connect the ```Combine&Clean``` component 
 
 
 

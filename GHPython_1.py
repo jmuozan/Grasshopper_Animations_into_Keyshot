@@ -1,4 +1,3 @@
-#1- GHPython
 Vert_data = open(Vert_storage, "w")
 Face_data = open(Face_storage, "w")
 
