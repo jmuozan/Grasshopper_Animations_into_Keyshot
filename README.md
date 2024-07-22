@@ -20,7 +20,7 @@ As I mentioned before, this is a work in progress so the code is not pretty effi
 - Blender: An open source 3d software. You can download from [here](https://www.blender.org/). (I'm using version 4.0 on MacOS Sonoma)
 - Keyshot: Rendering engine, I'm using version 11.3.3 in my tests. There should be no problem with the versions as long as it accepts alembic (.abc) files
 
-### Understanding Grasshopper Animations
+###  Understanding Grasshopper Animations
 
 To record the different animations we will have to be able to automatically change the different values of a slider. See the following example where a sphere component is connected to a slider that goes from one to 10. 
 
@@ -46,9 +46,9 @@ This is the way we will make a "slider" that moves automatically. Going back to 
 
 ![](IMGS/Animated_Sphere.gif)
 
-### How does the code work
+###  How does the code work
 
-#### Grasshopper scripts
+####  Grasshopper scripts
 
 These scripts are work of [3D Beast](https://www.youtube.com/@3DBeast) video [How to export any Mesh or kangaroo animation directly from Grasshopper To Blender using Python](https://youtu.be/Xm__UO0vw8E?si=HCaIqv2emvJkY-vh) I really recommend to watch that video before doing it to really understand how do they work and how to set them up. In any case I will overall explain how they work here. 
 
@@ -145,11 +145,72 @@ After having the 3 inputs we will rename them by clicking on top of each text an
 
 ![](IMGS/New_Inputs.png)
 
-After this we will connect the ```Combine&Clean``` component 
+After this we will connect the ```Combine&Clean``` component to ```Mesh``` and the panels with the paths to ```Vert_storage``` and ```Face_storage```. Also you'll have to right click on top of mesh input on the python component and change the type to ```Mesh```.
 
+![](IMGS/Mesh.png)
 
+![](IMGS/Set_Up_GHPython_1.png)
 
-#### Blender scripts
+Now, going into the second Grasshopper Python script ``` GHPython_2.py```. The main idea here is to save the animation data of the mesh vertices inside a .csv file too. Here's a step by step code explanation:
+
+```python
+if Clear:
+	open(Animation_path, "w")
+if not Clear:
+	A_data = open(Animation_path, "a")
+	for v in Mesh.Vertices:
+		A_data.write(str(v) + ",")
+	A_data.write("\n")
+A_data.close()
+```
+
+1. **Conditional file opening:**
+
+```python
+if Clear:
+    open(Animation_path, "w")
+```
+
+- If the variable `Clear` is `True`, the file at `Animation_path` is opened in write mode (`"w"`), which clears the file's contents. 
+
+2. **Appending data to the file:**
+
+```python
+if not Clear:
+    A_data = open(Animation_path, "a")
+    for v in Mesh.Vertices:
+        A_data.write(str(v) + ",")
+    A_data.write("\n")
+```
+
+- If `Clear` is `False`, the file at `Animation_path` is opened in append mode (`"a"`) and assigned to the variable `A_data`.
+- `for v in Mesh.Vertices:` iterates over each vertex in the list `Mesh.Vertices`.
+- `A_data.write(str(v) + ",")` converts the vertex object `v` to a string and writes it to the file `A_data`, followed by a comma.
+- After all vertices have been written, `A_data.write("\n")` writes a newline character to the file, ending the current line of data.
+
+3. **Closing the file:**
+
+```python
+A_data.close()
+```
+
+- This ensures that the file `A_data` is properly closed after writing.
+
+To set it up inside grasshopper a similar process to the previous script will be followed. Let's look again at the sphere example:
+
+A new ```Python 3 Script``` component will be added to the canvas and the code will be copied and saved inside. After this a new input will be added and all of them will be renamed to `Mesh`, `Clear` and `Animation_path`. 
+
+![](IMGS/GHPython_2.png)
+
+ `Mesh` will be connected to the `Combine&Clean` module again,  `Clear` will be connected to a `Button` component and lastly, `Animation_path` will be connected to a new panel with the path of the new .csv file created to save the animation data. This should be the final python set up:
+
+![](IMGS/GH_FINAL_SET_UP.png)
+
+To record or animation data we will only have to press the button to start recording. Once the button gets pressed by pressing the play button on the trigger component the sphere will start to get bigger and data will be saved in the .csv file until the play button gets pressed again. With that done, all the work inside Grasshopper will be done.
+
+![](IMGS/Recording.gif)
+
+#### Blender script
 
 
 
