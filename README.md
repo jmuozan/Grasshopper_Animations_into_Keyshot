@@ -20,7 +20,7 @@ As I mentioned before, this is a work in progress so the code is not pretty effi
 - Blender: An open source 3d software. You can download from [here](https://www.blender.org/). (I'm using version 4.0 on MacOS Sonoma)
 - Keyshot: Rendering engine, I'm using version 11.3.3 in my tests. There should be no problem with the versions as long as it accepts alembic (.abc) files
 
-###  Understanding Grasshopper Animations
+### Understanding Grasshopper Animations
 
 To record the different animations we will have to be able to automatically change the different values of a slider. See the following example where a sphere component is connected to a slider that goes from one to 10. 
 
@@ -46,9 +46,9 @@ This is the way we will make a "slider" that moves automatically. Going back to 
 
 ![](IMGS/Animated_Sphere.gif)
 
-###  How does the code work
+### How does the code work
 
-####  Grasshopper scripts
+#### Grasshopper scripts
 
 These scripts are work of [3D Beast](https://www.youtube.com/@3DBeast) video [How to export any Mesh or kangaroo animation directly from Grasshopper To Blender using Python](https://youtu.be/Xm__UO0vw8E?si=HCaIqv2emvJkY-vh) I really recommend to watch that video before doing it to really understand how do they work and how to set them up. In any case I will overall explain how they work here. 
 
