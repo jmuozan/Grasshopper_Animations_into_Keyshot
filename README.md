@@ -20,7 +20,7 @@ As I mentioned before, this is a work in progress so the code is not pretty effi
 - Blender: An open source 3d software. You can download from [here](https://www.blender.org/). (I'm using version 4.0 on MacOS Sonoma)
 - Keyshot: Rendering engine, I'm using version 11.3.3 in my tests. There should be no problem with the versions as long as it accepts alembic (.abc) files
 
-###  Understanding Grasshopper Animations
+### Understanding Grasshopper Animations
 
 To record the different animations we will have to be able to automatically change the different values of a slider. See the following example where a sphere component is connected to a slider that goes from one to 10. 
 
@@ -46,9 +46,9 @@ This is the way we will make a "slider" that moves automatically. Going back to 
 
 ![](IMGS/Animated_Sphere.gif)
 
-###  How does the code work
+### How does the code work
 
-####  Grasshopper scripts
+#### Grasshopper scripts
 
 These scripts are work of [3D Beast](https://www.youtube.com/@3DBeast) video [How to export any Mesh or kangaroo animation directly from Grasshopper To Blender using Python](https://youtu.be/Xm__UO0vw8E?si=HCaIqv2emvJkY-vh) I really recommend to watch that video before doing it to really understand how do they work and how to set them up. In any case I will overall explain how they work here. 
 
@@ -215,4 +215,215 @@ To record or animation data we will only have to press the button to start recor
 
 
 
+
+
+
+```python
+import bpy
+import csv
+import os
+
+# Path to the OBJ_SEQUENCE folder
+output_dir = "/Users/jorgemuyo/Desktop/GH/GH-KS/OBJ_SEQUENCE"
+
+# Create the directory if it doesn't exist
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+# Delete all objects in the scene
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete()
+
+# Read files
+with open("/Users/jorgemuyo/Desktop/GH/GH-KS/Face.csv") as f:
+    Face_data = list((csv.reader(f)))
+
+with open("/Users/jorgemuyo/Desktop/GH/GH-KS/Vert.csv") as v:
+    Vert_data = list((csv.reader(v)))
+
+# Getting vert and face
+Vert = ([tuple(map(float, x)) for x in Vert_data])
+Face = ([tuple(map(int, x)) for x in Face_data])
+Edge = []
+
+# Generating meshes
+mesh = bpy.data.meshes.new("from_gh")
+obj = bpy.data.objects.new(mesh.name, mesh)
+col = bpy.data.collections.get("Collection")
+if col is None:
+    col = bpy.context.scene.collection
+col.objects.link(obj)
+bpy.context.view_layer.objects.active = obj
+mesh.from_pydata(Vert, Edge, Face)
+
+# Read files for animation_data and arrange
+with open("/Users/jorgemuyo/Desktop/GH/GH-KS/Animation.csv") as a:
+    Animation_data = list(csv.reader(a, quoting=csv.QUOTE_NONNUMERIC))
+
+itr = len(Animation_data)
+no_co = len(Animation_data[0]) - 1
+no_v = int(no_co / 3)
+v_co = [[tuple(x[i:i+3]) for i in range(0, no_co, 3)] for x in Animation_data]
+
+# Getting last created objects
+context = bpy.context
+ob = context.object
+me = ob.data
+
+print("Start keyframing")
+# Keyframing
+for i in range(itr):
+    for j in range(no_v):
+        v = me.vertices[j]
+        v.co = v_co[i][j]
+        v.keyframe_insert("co")
+
+    bpy.context.scene.frame_current += 3
+    perc = "{:.0%}".format(i / itr)
+    print(perc, end="\r")
+print("Successfully imported")
+
+# Add subdivision modifier with 2 levels
+mod_subsurf = obj.modifiers.new(name="Subdivision", type='SUBSURF')
+mod_subsurf.levels = 3
+mod_subsurf.render_levels = 3
+
+# Deselect all objects
+bpy.ops.object.select_all(action='DESELECT')
+
+# Select all objects
+bpy.ops.object.select_all(action='SELECT')
+
+# Export each frame as an OBJ file
+for frame in range(1, bpy.context.scene.frame_end + 1):
+    bpy.context.scene.frame_set(frame)
+    filepath = os.path.join(output_dir, f"frame_{frame:04d}.obj")
+    bpy.ops.wm.obj_export(filepath=filepath, export_selected_objects=True, export_materials=False)
+
+print("Exported all frames as OBJ files")
+
+```
+
+```python
+import bpy
+import os
+import re
+
+# Delete all objects in the scene
+bpy.ops.object.select_all(action='SELECT')
+bpy.ops.object.delete()
+
+# Path to the folder containing the obj files
+folder_path = "/Users/jorgemuyo/Desktop/GH/GH-KS/OBJ_SEQUENCE"
+
+# Function to sort files by numerical suffix
+def numerical_sort(value):
+    numbers = re.findall(r'\d+', value)
+    return int(numbers[-1]) if numbers else -1
+
+# List all files in the directory, filter .obj files, and sort them
+file_list = sorted([f for f in os.listdir(folder_path) if f.endswith('.obj')], key=numerical_sort)
+
+# Function to import obj file
+def import_obj_file(file_path):
+    bpy.ops.wm.obj_import(filepath=file_path)
+    obj = bpy.context.selected_objects[0]
+    return obj
+
+# Import the first OBJ file and use it as the base mesh
+base_obj = import_obj_file(os.path.join(folder_path, file_list[0]))
+base_obj.name = "BaseMesh"
+bpy.context.view_layer.objects.active = base_obj
+base_obj.shape_key_add(name="Basis", from_mix=False)
+
+# Function to create shape keys from subsequent OBJ files
+def create_shape_keys(base_obj, file_list):
+    for i, file_name in enumerate(file_list[1:]):
+        file_path = os.path.join(folder_path, file_name)
+        temp_obj = import_obj_file(file_path)
+        
+        shape_key = base_obj.shape_key_add(name=f"Frame_{i+1}", from_mix=False)
+        
+        # Copy vertex positions from the imported object to the shape key
+        for j, vert in enumerate(temp_obj.data.vertices):
+            shape_key.data[j].co = vert.co
+        
+        # Delete the temporary object
+        bpy.data.objects.remove(temp_obj, do_unlink=True)
+        
+        print(f"Created shape key for {file_name}")
+
+# Create shape keys
+create_shape_keys(base_obj, file_list)
+
+# Function to animate shape key influence
+def animate_shape_keys(base_obj, file_list):
+    for frame, file_name in enumerate(file_list[1:], start=1):
+        bpy.context.scene.frame_set(frame)
+        for sk in base_obj.data.shape_keys.key_blocks:
+            sk.value = 0.0
+            sk.keyframe_insert(data_path="value", frame=frame)
+        shape_key = base_obj.data.shape_keys.key_blocks[f"Frame_{frame}"]
+        shape_key.value = 1.0
+        shape_key.keyframe_insert(data_path="value", frame=frame)
+        print(f"Frame {frame}: Shape key {shape_key.name} set to 1.0")
+
+# Animate shape keys
+animate_shape_keys(base_obj, file_list)
+
+# Clean up the scene by deleting all objects except the base_obj
+def cleanup_scene(base_obj):
+    for obj in bpy.context.scene.objects:
+        if obj != base_obj and obj.type != 'CAMERA' and obj.type != 'LIGHT':
+            bpy.data.objects.remove(obj, do_unlink=True)
+
+# Perform cleanup
+cleanup_scene(base_obj)
+
+print("Mesh deforming animation creation complete.")
+
+# Deselect all objects
+bpy.ops.object.select_all(action='DESELECT')
+
+# Select all objects
+bpy.ops.object.select_all(action='SELECT')
+
+# Export the selection as an Alembic file (.abc)
+abc_export_path = os.path.join(folder_path, "exported_animation.abc")
+bpy.ops.wm.alembic_export(filepath=abc_export_path, selected=True)
+
+print(f"Alembic file exported to {abc_export_path}")
+```
+
+```python
+# Export the selected objects as Alembic
+bpy.ops.wm.alembic_export(
+    filepath=output_path,
+    check_existing=False,
+    selected=True,  # Export only selected objects
+    start=bpy.context.scene.frame_start,  # Start frame
+    end=bpy.context.scene.frame_end,  # End frame
+    xsamples=1,
+    as_background_job=False,
+    uv_write=True,
+    pack_uv=False,
+    geom_custom_property=False,
+    time_sampling='1',  # Per frame sampling
+    global_scale=1.0,
+    subframe=1.0,
+    apply_subdiv=True,
+    flatten=False,
+    visible_objects_only=True,
+    renderable_only=True,
+    face_sets=True,
+    uvs=True,
+    vertex_colors=False,
+    extra_attributes='',
+    export_hair=False,
+    export_particles=False,
+    triangulate=False,
+    quad_method='SHORTEST_DIAGONAL',
+    ngon_method='BEAUTY'
+)
+```
 
